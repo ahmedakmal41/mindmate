@@ -1,9 +1,8 @@
 services:
   - type: web
     name: mindmate
-    env: php
-    buildCommand: composer install --no-dev --optimize-autoloader
-    startCommand: php -S 0.0.0.0:$PORT -t .
+    env: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: MONGODB_CONNECTION_STRING
         value: mongodb://mindmate-cdb:undefined@mindmate-cdb.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@mindmate-cdb@
