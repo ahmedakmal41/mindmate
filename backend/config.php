@@ -1,23 +1,16 @@
 <?php
 // MindMate - Database Configuration
 
-// Database connection settings
-// Use environment variables for Azure deployment
-$host = getenv('DB_HOST') ?: 'localhost';
-$user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') ?: '';
-$db = getenv('DB_NAME') ?: 'mindmate';
+// Database configuration - Using MongoDB/CosmosDB
+$db_type = getenv('DB_TYPE') ?: 'mongodb';
 
-// Create connection
-$conn = new mysqli($host, $user, $pass, $db);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// MongoDB connection (no MySQL needed)
+if ($db_type === 'mongodb') {
+    // MongoDB will be initialized in db_abstraction.php
+    $conn = null; // No MySQL connection needed
+} else {
+    die("Only MongoDB is supported. Set DB_TYPE=mongodb");
 }
-
-// Set charset to utf8mb4 for proper Unicode support
-$conn->set_charset("utf8mb4");
 
 // Error reporting (disable in production)
 error_reporting(E_ALL);
