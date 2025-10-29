@@ -1,0 +1,21 @@
+{
+    "require": {
+        "php": ">=8.0",
+        "mongodb/mongodb": "^1.15"
+    },
+    "require-dev": {},
+    "scripts": {
+        "post-install-cmd": [
+            "echo 'PHP dependencies installed successfully'"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "MindMate\\": "backend/"
+        }
+    }
+}

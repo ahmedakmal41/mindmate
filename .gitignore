@@ -1,0 +1,44 @@
+# Python
+ai_engine/venv/
+ai_engine/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.vercel/
+
+# Environment
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Uploads
+uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Deployment files
+*.zip
+mindmate-vercel/
+mindmate-railway/
+
+# Large files
+*.dylib
+*.so.*

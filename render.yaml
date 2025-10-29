@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mindmate
+    env: php
+    buildCommand: composer install --no-dev --optimize-autoloader
+    startCommand: php -S 0.0.0.0:$PORT -t .
+    envVars:
+      - key: MONGODB_CONNECTION_STRING
+        value: mongodb://mindmate-cdb:undefined@mindmate-cdb.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@mindmate-cdb@
+      - key: COSMOS_DATABASE
+        value: mindmate
+      - key: AI_API_URL
+        value: https://aiengine-sable.vercel.app
+      - key: DB_TYPE
+        value: mongodb

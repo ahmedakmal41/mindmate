@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindMate - AI-Powered Psychological Counselling</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="#">
+                <i class="fas fa-brain me-2"></i>MindMate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="login.php">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary ms-2" href="register.php">Get Started</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold text-dark mb-4">
+                        Your AI Psychologist & 
+                        <span class="text-primary">Student Support</span> 
+                        Companion
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        Experience intelligent and empathetic counselling through AI-powered conversations, 
+                        mood analysis, and emotional insights. Your mental well-being matters.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="register.php" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-rocket me-2"></i>Start Your Journey
+                        </a>
+                        <a href="#features" class="btn btn-outline-primary btn-lg px-4">
+                            <i class="fas fa-play me-2"></i>Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-image">
+                        <div class="floating-card">
+                            <div class="chat-preview">
+                                <div class="message user-message">
+                                    <div class="message-content">
+                                        I've been feeling really anxious about my exams lately...
+                                    </div>
+                                </div>
+                                <div class="message ai-message">
+                                    <div class="message-content">
+                                        I understand that exam anxiety can be overwhelming. Let's work through this together. What specific aspects of your exams are causing you the most stress?
+                                    </div>
+                                </div>
+                                <div class="typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center mb-5">
+                    <h2 class="display-5 fw-bold text-dark mb-3">Why Choose MindMate?</h2>
+                    <p class="lead text-muted">Advanced AI technology meets compassionate care</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-robot text-primary"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">AI-Powered Support</h4>
+                        <p class="text-muted">State-of-the-art NLP models provide empathetic and intelligent responses to your concerns.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-shield-alt text-primary"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Privacy & Security</h4>
+                        <p class="text-muted">Your conversations are encrypted and anonymous. Your mental health journey is completely confidential.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chart-line text-primary"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Mood Analytics</h4>
+                        <p class="text-muted">Track your emotional patterns and gain insights into your mental well-being over time.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h2 class="display-5 fw-bold text-dark mb-4">Technology That Heals</h2>
+                    <p class="lead text-muted mb-4">
+                        MindMate combines cutting-edge AI technology with proven psychological principles 
+                        to create a safe, supportive environment for your mental health journey.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                <span>24/7 Availability</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                <span>Anonymous Sessions</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                <span>Crisis Detection</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                <span>Mobile Friendly</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="about-image">
+                        <div class="tech-stack">
+                            <div class="tech-item">
+                                <i class="fab fa-html5 text-danger"></i>
+                                <span>HTML5</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fab fa-php text-primary"></i>
+                                <span>PHP 8.x</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fab fa-python text-warning"></i>
+                                <span>Python AI</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fas fa-database text-info"></i>
+                                <span>MySQL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">Ready to Start Your Mental Health Journey?</h2>
+            <p class="lead mb-4">Join thousands of users who have found support and understanding through MindMate.</p>
+            <a href="register.php" class="btn btn-light btn-lg px-5">
+                <i class="fas fa-heart me-2"></i>Get Started Today
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-brain me-2"></i>MindMate
+                    </h5>
+                    <p class="text-muted">Technology should heal, not just help. MindMate brings empathy to AI.</p>
+                </div>
+                <div class="col-lg-2 mb-4">
+                    <h6 class="fw-bold mb-3">Product</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">Features</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Pricing</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Security</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 mb-4">
+                    <h6 class="fw-bold mb-3">Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">Help Center</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Contact Us</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Privacy</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h6 class="fw-bold mb-3">Contact</h6>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-envelope me-2"></i>contact@mindmate.ai
+                    </p>
+                    <p class="text-muted">
+                        <i class="fas fa-globe me-2"></i>https://www.mindmate.ai
+                    </p>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">&copy; 2024 MindMate. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">Licensed under MIT License</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
+
