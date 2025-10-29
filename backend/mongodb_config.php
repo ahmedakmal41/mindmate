@@ -69,8 +69,10 @@ $mongodb = new MongoDBConnection($mongodb_connection_string, $cosmos_database, $
 // Create indexes
 $mongodb->createIndexes();
 
-// Database functions for MongoDB
-function createUser($userData) {
+// Note: Global convenience functions are defined in db_abstraction.php
+// These MongoDB-specific implementations are called by the DatabaseAbstraction class
+
+function createUserMongoDB($userData) {
     global $mongodb;
     
     $document = [
@@ -87,7 +89,7 @@ function createUser($userData) {
     return $result->getInsertedId();
 }
 
-function getUserByEmail($email) {
+function getUserByEmailMongoDB($email) {
     global $mongodb;
     
     $user = $mongodb->getCollection('users')->findOne(['email' => $email]);
@@ -109,7 +111,7 @@ function getUserByEmail($email) {
     return null;
 }
 
-function getUserById($id) {
+function getUserByIdMongoDB($id) {
     global $mongodb;
     
     try {
@@ -135,7 +137,7 @@ function getUserById($id) {
     return null;
 }
 
-function updateUser($id, $userData) {
+function updateUserMongoDB($id, $userData) {
     global $mongodb;
     
     $update = [
@@ -154,7 +156,7 @@ function updateUser($id, $userData) {
     return $result->getModifiedCount() > 0;
 }
 
-function saveChat($chatData) {
+function saveChatMongoDB($chatData) {
     global $mongodb;
     
     $document = [
@@ -170,7 +172,7 @@ function saveChat($chatData) {
     return $result->getInsertedId();
 }
 
-function getRecentChats($userId, $limit = 5) {
+function getRecentChatsMongoDB($userId, $limit = 5) {
     global $mongodb;
     
     $chats = $mongodb->getCollection('chats')->find(
@@ -194,7 +196,7 @@ function getRecentChats($userId, $limit = 5) {
     return array_reverse($result);
 }
 
-function getChatHistory($userId, $limit = 50) {
+function getChatHistoryMongoDB($userId, $limit = 50) {
     global $mongodb;
     
     $chats = $mongodb->getCollection('chats')->find(
@@ -218,7 +220,7 @@ function getChatHistory($userId, $limit = 50) {
     return $result;
 }
 
-function saveMoodCheck($moodData) {
+function saveMoodCheckMongoDB($moodData) {
     global $mongodb;
     
     $document = [
@@ -232,7 +234,7 @@ function saveMoodCheck($moodData) {
     return $result->getInsertedId();
 }
 
-function getMoodChecks($userId, $limit = 30) {
+function getMoodChecksMongoDB($userId, $limit = 30) {
     global $mongodb;
     
     $moods = $mongodb->getCollection('mood_checks')->find(
@@ -255,7 +257,7 @@ function getMoodChecks($userId, $limit = 30) {
     return $result;
 }
 
-function checkRateLimit($userId, $action) {
+function checkRateLimitMongoDB($userId, $action) {
     global $mongodb;
     
     $oneMinuteAgo = new MongoDB\BSON\UTCDateTime(strtotime('-1 minute') * 1000);
@@ -269,7 +271,7 @@ function checkRateLimit($userId, $action) {
     return $count < 10; // Rate limit: 10 requests per minute
 }
 
-function recordRateLimit($userId, $action) {
+function recordRateLimitMongoDB($userId, $action) {
     global $mongodb;
     
     $document = [
