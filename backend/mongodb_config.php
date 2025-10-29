@@ -6,6 +6,15 @@ $mongodb_connection_string = getenv('MONGODB_CONNECTION_STRING') ?: 'mongodb://m
 $cosmos_database = getenv('COSMOS_DATABASE') ?: 'mindmate';
 
 // MongoDB client
+// Check if MongoDB extension is available
+if (!extension_loaded('mongodb')) {
+    // Running locally without MongoDB extension
+    // Just create a mock connection for development
+    error_log("MongoDB extension not loaded - running in local development mode");
+    $mongodb = null;
+    return;
+}
+
 require_once 'vendor/autoload.php';
 use MongoDB\Client;
 
