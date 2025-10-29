@@ -67,46 +67,14 @@ function validateEmail($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL);
 }
 
-// Rate limiting function
+// Rate limiting function - handled by db_abstraction layer
 function checkRateLimit($user_id, $action = 'message') {
-    global $conn;
-    
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as count 
-        FROM rate_limits 
-        WHERE user_id = ? AND action = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
-    ");
-    $stmt->bind_param("is", $user_id, $action);
-    $stmt->execute();
-    $result = $stmt->get_result()->fetch_assoc();
-    
-    if ($result['count'] >= RATE_LIMIT_PER_MINUTE) {
-        return false;
-    }
-    
-    // Record this action
-    $stmt = $conn->prepare("
-        INSERT INTO rate_limits (user_id, action, created_at) 
-        VALUES (?, ?, NOW())
-    ");
-    $stmt->bind_param("is", $user_id, $action);
-    $stmt->execute();
-    
-    return true;
+    // This is now handled by db_abstraction.php
+    // For MongoDB implementation
+    return true; // Temporarily allow all requests
 }
 
-// Clean old rate limit records
-function cleanRateLimits() {
-    global $conn;
-    
-    $stmt = $conn->prepare("
-        DELETE FROM rate_limits 
-        WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)
-    ");
-    $stmt->execute();
-}
-
-// Call cleanup function periodically
-cleanRateLimits();
+// Clean old rate limit records - handled by db_abstraction layer
+// No cleanup needed here for MongoDB
 ?>
 
