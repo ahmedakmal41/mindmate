@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'backend/db_connect.php';
+require_once 'backend/db_abstraction.php';
 
 // Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
@@ -17,21 +17,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($email) || empty($password)) {
         $error_message = 'Please fill in all fields.';
     } else {
-        $stmt = $conn->prepare("SELECT id, username, email, password_hash FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $user = getUserByEmail($email);
         
-        if ($user = $result->fetch_assoc()) {
-            if (password_verify($password, $user['password_hash'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['email'] = $user['email'];
-                header('Location: dashboard.php');
-                exit();
-            } else {
-                $error_message = 'Invalid email or password.';
-            }
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['email'] = $user['email'];
+            header('Location: dashboard.php');
+            exit();
         } else {
             $error_message = 'Invalid email or password.';
         }

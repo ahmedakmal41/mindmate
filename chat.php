@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'backend/db_connect.php';
+require_once 'backend/db_abstraction.php';
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -12,10 +12,9 @@ $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
 // Get chat history
-$stmt = $conn->prepare("SELECT * FROM chats WHERE user_id = ? ORDER BY timestamp ASC");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$chat_history = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$chat_history = getChatHistory($user_id);
+// Reverse to show oldest first
+$chat_history = array_reverse($chat_history);
 ?>
 <!DOCTYPE html>
 <html lang="en">

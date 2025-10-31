@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'backend/db_connect.php';
+require_once 'backend/db_abstraction.php';
 
 // Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
@@ -28,20 +28,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error_message = 'Please enter a valid email address.';
     } else {
         // Check if email already exists
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $existingUser = getUserByEmail($email);
         
-        if ($result->num_rows > 0) {
+        if ($existingUser) {
             $error_message = 'An account with this email already exists.';
         } else {
             // Create new user
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $username, $email, $password_hash);
+            $userData = [
+                'username' => $username,
+                'email' => $email,
+                'password_hash' => $password_hash
+            ];
             
-            if ($stmt->execute()) {
+            if (createUser($userData)) {
                 $success_message = 'Account created successfully! You can now sign in.';
                 // Redirect to login after 2 seconds
                 header("refresh:2;url=login.php");

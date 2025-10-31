@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'backend/db_connect.php';
+require_once 'backend/db_abstraction.php';
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -11,28 +11,21 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
-// Get user statistics
-$stmt = $conn->prepare("SELECT COUNT(*) as total_chats FROM chats WHERE user_id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$total_chats = $stmt->get_result()->fetch_assoc()['total_chats'];
-
 // Get recent chats
-$stmt = $conn->prepare("SELECT * FROM chats WHERE user_id = ? ORDER BY timestamp DESC LIMIT 5");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$recent_chats = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$recent_chats = getRecentChats($user_id, 5);
+$total_chats = count(getChatHistory($user_id));
 
-// Get mood analytics (simplified for demo)
-$stmt = $conn->prepare("SELECT sentiment, COUNT(*) as count FROM chats WHERE user_id = ? AND sentiment IS NOT NULL GROUP BY sentiment");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$mood_data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-// Calculate mood distribution
+// Calculate mood distribution from recent chats
 $mood_distribution = [];
-foreach ($mood_data as $mood) {
-    $mood_distribution[$mood['sentiment']] = $mood['count'];
+$all_chats = getChatHistory($user_id);
+foreach ($all_chats as $chat) {
+    if (isset($chat['sentiment']) && !empty($chat['sentiment'])) {
+        $sentiment = $chat['sentiment'];
+        if (!isset($mood_distribution[$sentiment])) {
+            $mood_distribution[$sentiment] = 0;
+        }
+        $mood_distribution[$sentiment]++;
+    }
 }
 ?>
 <!DOCTYPE html>

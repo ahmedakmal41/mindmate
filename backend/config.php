@@ -1,6 +1,9 @@
 <?php
 // MindMate - Database Configuration
 
+// Load environment variables from .env file
+require_once __DIR__ . '/load_env.php';
+
 // Database configuration - Using MongoDB/CosmosDB
 $db_type = getenv('DB_TYPE') ?: 'mongodb';
 
@@ -67,14 +70,6 @@ function validateEmail($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL);
 }
 
-// Rate limiting function - handled by db_abstraction layer
-function checkRateLimit($user_id, $action = 'message') {
-    // This is now handled by db_abstraction.php
-    // For MongoDB implementation
-    return true; // Temporarily allow all requests
-}
-
-// Clean old rate limit records - handled by db_abstraction layer
-// No cleanup needed here for MongoDB
+// Rate limiting and cleanup functions are in db_abstraction.php
 ?>
 

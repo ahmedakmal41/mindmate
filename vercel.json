@@ -7,9 +7,13 @@
     { "source": "/chat", "destination": "/api/chat" }
   ],
   "env": {
-    "MONGODB_CONNECTION_STRING": "mongodb://mindmate-cdb:undefined@mindmate-cdb.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@mindmate-cdb@",
     "COSMOS_DATABASE": "mindmate",
     "AI_API_URL": "https://aiengine-sable.vercel.app",
     "DB_TYPE": "mongodb"
+  },
+  "build": {
+    "env": {
+      "MONGODB_CONNECTION_STRING": "@mongodb_connection_string"
+    }
   }
 }

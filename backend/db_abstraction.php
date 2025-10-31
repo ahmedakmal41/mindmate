@@ -4,33 +4,30 @@
 
 require_once 'config.php';
 
-// Determine database type
-$db_type = getenv('DB_TYPE') ?: 'mysql';
+// Determine database type - default to MongoDB
+$db_type = getenv('DB_TYPE') ?: 'mongodb';
 
-if ($db_type === 'cosmosdb') {
-    require_once 'cosmos_config.php';
-} elseif ($db_type === 'mongodb') {
+if ($db_type === 'mongodb') {
     require_once 'mongodb_config.php';
-} else {
+} elseif ($db_type === 'mysql') {
     require_once 'db_connect.php';
+} else {
+    die("Invalid DB_TYPE: $db_type. Use 'mysql' or 'mongodb'");
 }
 
 // Database abstraction functions
 class DatabaseAbstraction {
     private $db_type;
     private $mysql_conn;
-    private $cosmos;
     private $mongodb;
     
     public function __construct() {
-        global $db_type, $conn, $cosmos, $mongodb;
+        global $db_type, $conn, $mongodb;
         
         $this->db_type = $db_type;
         
         if ($db_type === 'mysql') {
             $this->mysql_conn = $conn;
-        } elseif ($db_type === 'cosmosdb') {
-            $this->cosmos = $cosmos;
         } elseif ($db_type === 'mongodb') {
             $this->mongodb = $mongodb;
         }
@@ -40,40 +37,32 @@ class DatabaseAbstraction {
     public function createUser($userData) {
         if ($this->db_type === 'mysql') {
             return $this->createUserMySQL($userData);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return createUser($userData);
         } else {
-            return createUser($userData);
+            return createUserMongoDB($userData);
         }
     }
     
     public function getUserByEmail($email) {
         if ($this->db_type === 'mysql') {
             return $this->getUserByEmailMySQL($email);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return getUserByEmail($email);
         } else {
-            return getUserByEmail($email);
+            return getUserByEmailMongoDB($email);
         }
     }
     
     public function getUserById($id) {
         if ($this->db_type === 'mysql') {
             return $this->getUserByIdMySQL($id);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return getUserById($id);
         } else {
-            return getUserById($id);
+            return getUserByIdMongoDB($id);
         }
     }
     
     public function updateUser($id, $userData) {
         if ($this->db_type === 'mysql') {
             return $this->updateUserMySQL($id, $userData);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return $this->updateUserCosmos($id, $userData);
         } else {
-            return updateUser($id, $userData);
+            return updateUserMongoDB($id, $userData);
         }
     }
     
@@ -81,30 +70,24 @@ class DatabaseAbstraction {
     public function saveChat($chatData) {
         if ($this->db_type === 'mysql') {
             return $this->saveChatMySQL($chatData);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return saveChat($chatData);
         } else {
-            return saveChat($chatData);
+            return saveChatMongoDB($chatData);
         }
     }
     
     public function getRecentChats($userId, $limit = 5) {
         if ($this->db_type === 'mysql') {
             return $this->getRecentChatsMySQL($userId, $limit);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return getRecentChats($userId, $limit);
         } else {
-            return getRecentChats($userId, $limit);
+            return getRecentChatsMongoDB($userId, $limit);
         }
     }
     
     public function getChatHistory($userId, $limit = 50) {
         if ($this->db_type === 'mysql') {
             return $this->getChatHistoryMySQL($userId, $limit);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return $this->getChatHistoryCosmos($userId, $limit);
         } else {
-            return getChatHistory($userId, $limit);
+            return getChatHistoryMongoDB($userId, $limit);
         }
     }
     
@@ -112,41 +95,33 @@ class DatabaseAbstraction {
     public function saveMoodCheck($moodData) {
         if ($this->db_type === 'mysql') {
             return $this->saveMoodCheckMySQL($moodData);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return saveMoodCheck($moodData);
         } else {
-            return saveMoodCheck($moodData);
+            return saveMoodCheckMongoDB($moodData);
         }
     }
     
     public function getMoodChecks($userId, $limit = 30) {
         if ($this->db_type === 'mysql') {
             return $this->getMoodChecksMySQL($userId, $limit);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return getMoodChecks($userId, $limit);
         } else {
-            return getMoodChecks($userId, $limit);
+            return getMoodChecksMongoDB($userId, $limit);
         }
     }
     
     // Rate limiting functions
     public function checkRateLimit($userId, $action) {
         if ($this->db_type === 'mysql') {
-            return checkRateLimit($userId, $action);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return checkRateLimit($userId, $action);
+            return $this->checkRateLimitMySQL($userId, $action);
         } else {
-            return checkRateLimit($userId, $action);
+            return checkRateLimitMongoDB($userId, $action);
         }
     }
     
     public function recordRateLimit($userId, $action) {
         if ($this->db_type === 'mysql') {
             return $this->recordRateLimitMySQL($userId, $action);
-        } elseif ($this->db_type === 'cosmosdb') {
-            return recordRateLimit($userId, $action);
         } else {
-            return recordRateLimit($userId, $action);
+            return recordRateLimitMongoDB($userId, $action);
         }
     }
     
@@ -295,26 +270,20 @@ class DatabaseAbstraction {
         return $stmt->execute();
     }
     
-    // Cosmos DB specific implementations
-    private function updateUserCosmos($id, $userData) {
-        $document = [
-            'username' => $userData['username'],
-            'email' => $userData['email'],
-            'updated_at' => date('Y-m-d H:i:s')
-        ];
+    private function checkRateLimitMySQL($userId, $action) {
+        $oneMinuteAgo = date('Y-m-d H:i:s', strtotime('-1 minute'));
         
-        return $this->cosmos->updateDocument('users', $id, $document);
-    }
-    
-    private function getChatHistoryCosmos($userId, $limit) {
-        $query = "SELECT TOP @limit * FROM c WHERE c.user_id = @userId ORDER BY c.timestamp DESC";
-        $result = $this->cosmos->queryDocuments('chats', $query);
+        $stmt = $this->mysql_conn->prepare("
+            SELECT COUNT(*) as count 
+            FROM rate_limits 
+            WHERE user_id = ? AND action = ? AND created_at > ?
+        ");
+        $stmt->bind_param("iss", $userId, $action, $oneMinuteAgo);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
         
-        if ($result['status'] === 200) {
-            return $result['body']['Documents'];
-        }
-        
-        return [];
+        return $row['count'] < 10; // Rate limit: 10 requests per minute
     }
 }
 
