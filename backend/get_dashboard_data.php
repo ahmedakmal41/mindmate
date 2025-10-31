@@ -2,7 +2,7 @@
 // MindMate - Get Dashboard Data
 
 session_start();
-require_once 'db_connect.php';
+require_once 'db_abstraction.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -21,13 +21,13 @@ try {
     $statistics = getStatistics($user_id);
     
     // Get recent chats
-    $recentChats = getRecentChats($user_id, 5);
+    $recentChats = getRecentChatsForDashboard($user_id, 5);
     
     // Get mood data
     $moodData = getMoodData($user_id);
     
     // Get mood checks
-    $moodChecks = getMoodChecks($user_id, 7);
+    $moodChecks = getMoodChecksForDashboard($user_id, 7);
     
     echo json_encode([
         'success' => true,
@@ -45,154 +45,105 @@ try {
 }
 
 function getStatistics($user_id) {
-    global $conn;
+    // Get all chats for the user
+    $allChats = getChatHistory($user_id, 1000); // Get a large number to calculate stats
     
-    // Total chats
-    $stmt = $conn->prepare("SELECT COUNT(*) as total_chats FROM chats WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $totalChats = $stmt->get_result()->fetch_assoc()['total_chats'];
+    $totalChats = count($allChats);
+    $weeklyChats = 0;
+    $monthlyChats = 0;
+    $sentimentSum = 0;
+    $sentimentCount = 0;
+    $lastChatTime = null;
     
-    // Chats this week
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as weekly_chats 
-        FROM chats 
-        WHERE user_id = ? AND timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $weeklyChats = $stmt->get_result()->fetch_assoc()['weekly_chats'];
+    $oneWeekAgo = strtotime('-7 days');
+    $oneMonthAgo = strtotime('-30 days');
     
-    // Chats this month
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as monthly_chats 
-        FROM chats 
-        WHERE user_id = ? AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $monthlyChats = $stmt->get_result()->fetch_assoc()['monthly_chats'];
+    foreach ($allChats as $chat) {
+        $chatTime = strtotime($chat['timestamp']);
+        
+        if ($chatTime >= $oneWeekAgo) {
+            $weeklyChats++;
+        }
+        if ($chatTime >= $oneMonthAgo) {
+            $monthlyChats++;
+        }
+        
+        // Calculate sentiment average
+        if (!empty($chat['sentiment'])) {
+            $sentimentValue = 0;
+            switch (strtoupper($chat['sentiment'])) {
+                case 'POSITIVE':
+                    $sentimentValue = 1;
+                    break;
+                case 'NEGATIVE':
+                    $sentimentValue = -1;
+                    break;
+                default:
+                    $sentimentValue = 0;
+            }
+            $sentimentSum += $sentimentValue;
+            $sentimentCount++;
+        }
+        
+        // Track last chat time
+        if (!$lastChatTime || $chatTime > $lastChatTime) {
+            $lastChatTime = $chatTime;
+        }
+    }
     
-    // Average sentiment
-    $stmt = $conn->prepare("
-        SELECT 
-            AVG(CASE 
-                WHEN sentiment = 'POSITIVE' THEN 1 
-                WHEN sentiment = 'NEGATIVE' THEN -1 
-                ELSE 0 
-            END) as avg_sentiment
-        FROM chats 
-        WHERE user_id = ? AND sentiment IS NOT NULL
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $avgSentiment = $stmt->get_result()->fetch_assoc()['avg_sentiment'];
-    
-    // Days since last chat
-    $stmt = $conn->prepare("
-        SELECT DATEDIFF(NOW(), MAX(timestamp)) as days_since_last_chat 
-        FROM chats 
-        WHERE user_id = ?
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $daysSinceLastChat = $stmt->get_result()->fetch_assoc()['days_since_last_chat'] ?? 0;
+    $avgSentiment = $sentimentCount > 0 ? $sentimentSum / $sentimentCount : 0;
+    $daysSinceLastChat = $lastChatTime ? floor((time() - $lastChatTime) / (24 * 60 * 60)) : 0;
     
     return [
-        'total_chats' => (int)$totalChats,
-        'weekly_chats' => (int)$weeklyChats,
-        'monthly_chats' => (int)$monthlyChats,
+        'total_chats' => $totalChats,
+        'weekly_chats' => $weeklyChats,
+        'monthly_chats' => $monthlyChats,
         'avg_sentiment' => round($avgSentiment, 2),
-        'days_since_last_chat' => (int)$daysSinceLastChat
+        'days_since_last_chat' => $daysSinceLastChat
     ];
 }
 
-function getRecentChats($user_id, $limit = 5) {
-    global $conn;
-    
-    $stmt = $conn->prepare("
-        SELECT 
-            id,
-            user_message,
-            ai_response,
-            sentiment,
-            timestamp
-        FROM chats 
-        WHERE user_id = ? 
-        ORDER BY timestamp DESC 
-        LIMIT ?
-    ");
-    $stmt->bind_param("ii", $user_id, $limit);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $chats = [];
-    while ($row = $result->fetch_assoc()) {
-        $chats[] = [
-            'id' => $row['id'],
-            'user_message' => $row['user_message'],
-            'ai_response' => $row['ai_response'],
-            'sentiment' => $row['sentiment'],
-            'timestamp' => $row['timestamp']
-        ];
-    }
-    
-    return $chats;
+function getRecentChatsForDashboard($user_id, $limit = 5) {
+    return getRecentChats($user_id, $limit);
 }
 
 function getMoodData($user_id) {
-    global $conn;
-    
-    // Get sentiment distribution
-    $stmt = $conn->prepare("
-        SELECT 
-            sentiment,
-            COUNT(*) as count
-        FROM chats 
-        WHERE user_id = ? 
-        AND sentiment IS NOT NULL 
-        AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-        GROUP BY sentiment
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
+    // Get recent chats and analyze sentiment distribution
+    $recentChats = getChatHistory($user_id, 100); // Get recent chats for analysis
     $moodData = [];
-    while ($row = $result->fetch_assoc()) {
-        $moodData[$row['sentiment']] = (int)$row['count'];
+    
+    $thirtyDaysAgo = strtotime('-30 days');
+    
+    foreach ($recentChats as $chat) {
+        $chatTime = strtotime($chat['timestamp']);
+        if ($chatTime >= $thirtyDaysAgo && !empty($chat['sentiment'])) {
+            $sentiment = $chat['sentiment'];
+            if (!isset($moodData[$sentiment])) {
+                $moodData[$sentiment] = 0;
+            }
+            $moodData[$sentiment]++;
+        }
     }
     
     return $moodData;
 }
 
-function getMoodChecks($user_id, $days = 7) {
-    global $conn;
+function getMoodChecksForDashboard($user_id, $days = 7) {
+    // Get mood checks using abstraction layer
+    $allMoodChecks = getMoodChecks($user_id, 50); // Get more than needed
     
-    $stmt = $conn->prepare("
-        SELECT 
-            mood,
-            notes,
-            timestamp
-        FROM mood_checks 
-        WHERE user_id = ? 
-        AND timestamp >= DATE_SUB(NOW(), INTERVAL ? DAY)
-        ORDER BY timestamp DESC
-    ");
-    $stmt->bind_param("ii", $user_id, $days);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Filter by days
+    $cutoffTime = strtotime("-$days days");
+    $filteredMoodChecks = [];
     
-    $moodChecks = [];
-    while ($row = $result->fetch_assoc()) {
-        $moodChecks[] = [
-            'mood' => $row['mood'],
-            'notes' => $row['notes'],
-            'timestamp' => $row['timestamp']
-        ];
+    foreach ($allMoodChecks as $moodCheck) {
+        $checkTime = strtotime($moodCheck['timestamp']);
+        if ($checkTime >= $cutoffTime) {
+            $filteredMoodChecks[] = $moodCheck;
+        }
     }
     
-    return $moodChecks;
+    return $filteredMoodChecks;
 }
 ?>
 

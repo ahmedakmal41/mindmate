@@ -2,7 +2,7 @@
 // MindMate - API Bridge (PHP to Python)
 
 session_start();
-require_once 'db_connect.php';
+require_once 'db_abstraction.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -166,30 +166,7 @@ function callAIAPI($data) {
 
 // Function to get recent chat history
 function getRecentChatHistory($user_id, $limit = 5) {
-    global $conn;
-    
-    $stmt = $conn->prepare("
-        SELECT user_message, ai_response, sentiment, timestamp 
-        FROM chats 
-        WHERE user_id = ? 
-        ORDER BY timestamp DESC 
-        LIMIT ?
-    ");
-    $stmt->bind_param("ii", $user_id, $limit);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $chats = [];
-    while ($row = $result->fetch_assoc()) {
-        $chats[] = [
-            'user_message' => $row['user_message'],
-            'ai_response' => $row['ai_response'],
-            'sentiment' => $row['sentiment'],
-            'timestamp' => $row['timestamp']
-        ];
-    }
-    
-    return array_reverse($chats); // Return in chronological order
+    return getRecentChats($user_id, $limit);
 }
 
 // Function to check AI API health

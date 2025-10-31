@@ -345,3 +345,42 @@ function recordRateLimit($userId, $action) {
     global $db;
     return $db->recordRateLimit($userId, $action);
 }
+// Session management functions
+function startSecureSession() {
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+}
+
+function regenerateSessionId() {
+    if (session_status() == PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
+}
+
+function destroySession() {
+    if (session_status() == PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+}
+
+// User authentication functions
+function isLoggedIn() {
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
+
+function requireLogin() {
+    if (!isLoggedIn()) {
+        header('Location: login.php');
+        exit();
+    }
+}
+
+function getCurrentUser() {
+    if (!isLoggedIn()) {
+        return null;
+    }
+    
+    return getUserById($_SESSION['user_id']);
+}
+

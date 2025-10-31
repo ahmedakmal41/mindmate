@@ -2,7 +2,7 @@
 // MindMate - Save Mood Check
 
 session_start();
-require_once 'db_connect.php';
+require_once 'db_abstraction.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -56,15 +56,16 @@ if (!checkRateLimit($_SESSION['user_id'], 'mood_check')) {
 }
 
 try {
-    // Save mood check
-    $stmt = $conn->prepare("
-        INSERT INTO mood_checks (user_id, mood, notes) 
-        VALUES (?, ?, ?)
-    ");
-    $stmt->bind_param("iss", $_SESSION['user_id'], $mood, $notes);
+    // Save mood check using database abstraction
+    $moodData = [
+        'user_id' => $_SESSION['user_id'],
+        'mood' => $mood,
+        'notes' => $notes
+    ];
     
-    if ($stmt->execute()) {
-        $moodCheckId = $conn->insert_id;
+    $moodCheckId = saveMoodCheck($moodData);
+    
+    if ($moodCheckId) {
         
         // Log the mood check
         logMessage("Mood check saved - User: {$_SESSION['user_id']}, Mood: $mood, ID: $moodCheckId", 'INFO');
@@ -74,13 +75,13 @@ try {
         
         echo json_encode([
             'success' => true,
-            'mood_check_id' => $moodCheckId,
+            'mood_check_id' => (string)$moodCheckId,
             'mood' => $mood,
             'insights' => $insights,
             'timestamp' => date('Y-m-d H:i:s')
         ]);
     } else {
-        throw new Exception("Failed to save mood check: " . $stmt->error);
+        throw new Exception("Failed to save mood check using database abstraction");
     }
     
 } catch (Exception $e) {
@@ -90,34 +91,13 @@ try {
 }
 
 function getMoodInsights($user_id, $currentMood) {
-    global $conn;
-    
     $insights = [];
     
-    // Get mood trend over last 7 days
-    $stmt = $conn->prepare("
-        SELECT 
-            mood,
-            COUNT(*) as count,
-            DATE(timestamp) as date
-        FROM mood_checks 
-        WHERE user_id = ? 
-        AND timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        GROUP BY mood, DATE(timestamp)
-        ORDER BY date DESC
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Get recent mood checks using abstraction layer
+    $recentMoodChecks = getMoodChecks($user_id, 30); // Get last 30 mood checks
     
-    $moodTrend = [];
-    while ($row = $result->fetch_assoc()) {
-        $moodTrend[$row['date']] = $row['mood'];
-    }
-    
-    // Analyze trend
-    if (count($moodTrend) >= 3) {
-        $recentMoods = array_slice($moodTrend, 0, 3);
+    if (count($recentMoodChecks) >= 3) {
+        $recentMoods = array_slice(array_column($recentMoodChecks, 'mood'), 0, 7); // Last 7 moods
         $positiveMoods = ['happy', 'excited', 'calm'];
         $negativeMoods = ['sad', 'anxious', 'angry'];
         
@@ -125,7 +105,7 @@ function getMoodInsights($user_id, $currentMood) {
             return in_array($mood, $positiveMoods);
         }));
         
-        if ($positiveCount >= 2) {
+        if ($positiveCount >= 4) {
             $insights[] = "You've been feeling more positive lately!";
         } elseif ($positiveCount == 0) {
             $insights[] = "You might want to consider talking to someone about how you're feeling.";

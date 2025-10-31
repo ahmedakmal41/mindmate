@@ -2,7 +2,7 @@
 // MindMate - Logout
 
 session_start();
-require_once 'backend/db_connect.php';
+require_once 'backend/db_abstraction.php';
 
 // Check if user is logged in
 if (isLoggedIn()) {

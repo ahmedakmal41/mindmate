@@ -2,7 +2,7 @@
 // MindMate - Save Chat Message
 
 session_start();
-require_once 'db_connect.php';
+require_once 'db_abstraction.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -78,39 +78,34 @@ try {
             exit();
         }
         
-        // Save both user message and AI response
-        $stmt = $conn->prepare("
-            INSERT INTO chats (user_id, user_message, ai_response, sentiment, confidence) 
-            VALUES (?, ?, ?, ?, ?)
-        ");
-        
+        // Save both user message and AI response using database abstraction
         $aiMessage = $aiResponse['reply'];
         $aiSentiment = $aiResponse['sentiment'];
         $aiConfidence = isset($aiResponse['confidence']) ? $aiResponse['confidence'] : null;
         
-        $stmt->bind_param("isssd", 
-            $_SESSION['user_id'], 
-            $message, 
-            $aiMessage, 
-            $aiSentiment, 
-            $aiConfidence
-        );
+        $chatData = [
+            'user_id' => $_SESSION['user_id'],
+            'user_message' => $message,
+            'ai_response' => $aiMessage,
+            'sentiment' => $aiSentiment,
+            'confidence' => $aiConfidence
+        ];
         
-        if ($stmt->execute()) {
-            $chatId = $conn->insert_id;
-            
+        $chatId = saveChat($chatData);
+        
+        if ($chatId) {
             // Log the interaction
-            logMessage("Chat saved - User: {$_SESSION['user_id']}, Chat ID: $chatId", 'INFO');
+            logMessage("Chat saved - User: {$_SESSION['user_id']}, Chat ID: " . (string)$chatId, 'INFO');
             
             echo json_encode([
                 'success' => true,
-                'chat_id' => $chatId,
+                'chat_id' => (string)$chatId,
                 'ai_response' => $aiMessage,
                 'sentiment' => $aiSentiment,
                 'confidence' => $aiConfidence
             ]);
         } else {
-            throw new Exception("Failed to save chat: " . $stmt->error);
+            throw new Exception("Failed to save chat using database abstraction");
         }
     } else {
         // This is an AI message (shouldn't happen in normal flow)
