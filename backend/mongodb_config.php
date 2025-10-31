@@ -468,5 +468,3 @@ function deleteUserSession($sessionId) {
     
     return $result->getDeletedCount() > 0;
 }
-
-?>

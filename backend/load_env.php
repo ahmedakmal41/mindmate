@@ -39,6 +39,3 @@ function loadEnv($path) {
 // Load .env from project root
 $envPath = dirname(__DIR__) . '/.env';
 loadEnv($envPath);
-?>
-
-

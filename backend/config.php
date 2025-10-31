@@ -15,16 +15,17 @@ if ($db_type === 'mongodb') {
     die("Only MongoDB is supported. Set DB_TYPE=mongodb");
 }
 
-// Error reporting (disable in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 // Session configuration (must be set before session_start)
 if (session_status() == PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
     ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
+    session_start(); // Start session here, before any output
 }
+
+// Error reporting (disable in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Timezone
 date_default_timezone_set('UTC');
@@ -71,5 +72,3 @@ function validateEmail($email) {
 }
 
 // Rate limiting and cleanup functions are in db_abstraction.php
-?>
-

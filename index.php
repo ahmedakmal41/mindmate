@@ -3,8 +3,7 @@
 require_once 'backend/config.php';
 require_once 'backend/db_abstraction.php';
 
-// Start session
-session_start();
+// Session is already started in config.php
 
 // Get the path from Vercel
 $path = $_SERVER['REQUEST_URI'] ?? '/';

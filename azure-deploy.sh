@@ -1,116 +1,150 @@
 #!/bin/bash
 
-# MindMate Azure Deployment Script
-# This script creates all necessary Azure resources for the MindMate application
+# Azure App Service Deployment Script for MindMate
+# This script creates and configures an Azure App Service for the MindMate application
+
+set -e
 
 # Configuration
 RESOURCE_GROUP="mindmate-rg"
-LOCATION="East US"
 APP_SERVICE_PLAN="mindmate-plan"
-WEB_APP_NAME="mindmate-web"
-AI_APP_NAME="mindmate-ai"
-MYSQL_SERVER="mindmate-mysql"
-MYSQL_DATABASE="mindmate"
-MYSQL_ADMIN_USER="mindmateadmin"
-MYSQL_ADMIN_PASSWORD="MindMate2024!Secure"
+WEB_APP_NAME="mindmate-app"
+LOCATION="eastus"
+PHP_VERSION="8.2"
+SKU="B1"
 
-echo "🚀 Starting MindMate Azure Deployment..."
+echo "🚀 Deploying MindMate to Azure App Service"
+echo "=========================================="
 
-# 1. Create Resource Group
-echo "📦 Creating Resource Group..."
+# Check if Azure CLI is installed
+if ! command -v az &> /dev/null; then
+    echo "❌ Azure CLI is not installed. Please install it first:"
+    echo "   https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"
+    exit 1
+fi
+
+# Login to Azure (if not already logged in)
+echo "🔐 Checking Azure login status..."
+if ! az account show &> /dev/null; then
+    echo "Please log in to Azure:"
+    az login
+fi
+
+# Get current subscription
+SUBSCRIPTION=$(az account show --query id -o tsv)
+echo "📊 Using subscription: $SUBSCRIPTION"
+
+# Create resource group if it doesn't exist
+echo "📁 Creating resource group: $RESOURCE_GROUP"
 az group create \
     --name $RESOURCE_GROUP \
-    --location "$LOCATION"
+    --location $LOCATION \
+    --output table
 
-# 2. Create App Service Plan
-echo "🏗️ Creating App Service Plan..."
+# Create App Service Plan
+echo "📋 Creating App Service Plan: $APP_SERVICE_PLAN"
 az appservice plan create \
     --name $APP_SERVICE_PLAN \
     --resource-group $RESOURCE_GROUP \
-    --location "$LOCATION" \
-    --sku B1 \
-    --is-linux
+    --location $LOCATION \
+    --sku $SKU \
+    --is-linux \
+    --output table
 
-# 3. Create MySQL Flexible Server
-echo "🗄️ Creating MySQL Database..."
-az mysql flexible-server create \
-    --resource-group $RESOURCE_GROUP \
-    --name $MYSQL_SERVER \
-    --location "$LOCATION" \
-    --admin-user $MYSQL_ADMIN_USER \
-    --admin-password $MYSQL_ADMIN_PASSWORD \
-    --sku-name Standard_B1ms \
-    --tier Burstable \
-    --public-access 0.0.0.0 \
-    --storage-size 20
-
-# 4. Create MySQL Database
-echo "📊 Creating Database..."
-az mysql flexible-server db create \
-    --resource-group $RESOURCE_GROUP \
-    --server-name $MYSQL_SERVER \
-    --database-name $MYSQL_DATABASE
-
-# 5. Create Web App (PHP)
-echo "🌐 Creating Web Application..."
+# Create Web App
+echo "🌐 Creating Web App: $WEB_APP_NAME"
 az webapp create \
+    --name $WEB_APP_NAME \
     --resource-group $RESOURCE_GROUP \
     --plan $APP_SERVICE_PLAN \
-    --name $WEB_APP_NAME \
-    --runtime "PHP|8.2"
+    --runtime "PHP:$PHP_VERSION" \
+    --output table
 
-# 6. Create AI App (Python)
-echo "🤖 Creating AI Application..."
-az webapp create \
-    --resource-group $RESOURCE_GROUP \
-    --plan $APP_SERVICE_PLAN \
-    --name $AI_APP_NAME \
-    --runtime "PYTHON|3.9"
+# Configure App Settings
+echo "⚙️  Configuring application settings..."
 
-# 7. Configure Web App Environment Variables
-echo "⚙️ Configuring Web App Environment Variables..."
+# Set basic app settings
 az webapp config appsettings set \
-    --resource-group $RESOURCE_GROUP \
     --name $WEB_APP_NAME \
-    --settings \
-        DB_HOST="$MYSQL_SERVER.mysql.database.azure.com" \
-        DB_USER="$MYSQL_ADMIN_USER" \
-        DB_PASS="$MYSQL_ADMIN_PASSWORD" \
-        DB_NAME="$MYSQL_DATABASE" \
-        AI_API_URL="https://$AI_APP_NAME.azurewebsites.net"
-
-# 8. Configure AI App Environment Variables
-echo "⚙️ Configuring AI App Environment Variables..."
-az webapp config appsettings set \
     --resource-group $RESOURCE_GROUP \
-    --name $AI_APP_NAME \
     --settings \
-        AZURE_API_KEY="91d0gBcVt4oAJ5VNaVtyKWdzgeBp4n8QmMe2LPUy9xShQK1vHE7vJQQJ99BGACYeBjFXJ3w3AAAAACOGpqEe" \
-        AZURE_ENDPOINT="https://zuse1-ai-foundry-t1-01.cognitiveservices.azure.com/" \
-        DEPLOYMENT_NAME="gpt-4.1" \
-        FLASK_ENV="production"
+        DB_TYPE="mongodb" \
+        COSMOS_DATABASE="mindmate" \
+        AI_API_URL="https://aiengine-sable.vercel.app" \
+        WEBSITES_ENABLE_APP_SERVICE_STORAGE="true" \
+        PHP_INI_SCAN_DIR="/usr/local/etc/php/conf.d:/home/site/ini" \
+    --output table
 
-# 9. Configure CORS for AI App
-echo "🔗 Configuring CORS..."
-az webapp cors add \
+# Enable HTTPS only
+echo "🔒 Enabling HTTPS only..."
+az webapp update \
+    --name $WEB_APP_NAME \
     --resource-group $RESOURCE_GROUP \
-    --name $AI_APP_NAME \
-    --allowed-origins "https://$WEB_APP_NAME.azurewebsites.net"
+    --https-only true \
+    --output table
 
-# 10. Get deployment URLs
-echo "✅ Deployment Complete!"
+# Configure PHP extensions
+echo "🔌 Configuring PHP extensions..."
+az webapp config set \
+    --name $WEB_APP_NAME \
+    --resource-group $RESOURCE_GROUP \
+    --startup-file "composer install --no-dev --optimize-autoloader && php -S 0.0.0.0:8080 -t ." \
+    --output table
+
+# Get the default hostname
+HOSTNAME=$(az webapp show \
+    --name $WEB_APP_NAME \
+    --resource-group $RESOURCE_GROUP \
+    --query defaultHostName \
+    --output tsv)
+
 echo ""
-echo "🌐 Web Application URL: https://$WEB_APP_NAME.azurewebsites.net"
-echo "🤖 AI Application URL: https://$AI_APP_NAME.azurewebsites.net"
-echo "🗄️ Database Server: $MYSQL_SERVER.mysql.database.azure.com"
+echo "✅ Azure App Service created successfully!"
+echo "=========================================="
+echo "🌐 App URL: https://$HOSTNAME"
+echo "📊 Resource Group: $RESOURCE_GROUP"
+echo "📋 App Service Plan: $APP_SERVICE_PLAN"
+echo "🏷️  Web App Name: $WEB_APP_NAME"
 echo ""
-echo "📋 Next Steps:"
-echo "1. Deploy your code to both applications"
-echo "2. Initialize the database with the schema"
-echo "3. Test the application"
+echo "🔧 Next Steps:"
+echo "1. Set MONGODB_CONNECTION_STRING in Azure Portal:"
+echo "   az webapp config appsettings set \\"
+echo "     --name $WEB_APP_NAME \\"
+echo "     --resource-group $RESOURCE_GROUP \\"
+echo "     --settings MONGODB_CONNECTION_STRING='your-connection-string'"
 echo ""
-echo "🔧 Database Connection Details:"
-echo "Host: $MYSQL_SERVER.mysql.database.azure.com"
-echo "Username: $MYSQL_ADMIN_USER"
-echo "Password: $MYSQL_ADMIN_PASSWORD"
-echo "Database: $MYSQL_DATABASE"
+echo "2. Deploy your code:"
+echo "   - Use GitHub Actions (azure-app-service-deploy.yml)"
+echo "   - Or use Azure CLI: az webapp deployment source config-zip"
+echo "   - Or use VS Code Azure extension"
+echo ""
+echo "3. Test your deployment:"
+echo "   https://$HOSTNAME/azure_debug.php"
+echo ""
+echo "4. Configure custom domain (optional):"
+echo "   az webapp config hostname add --webapp-name $WEB_APP_NAME --resource-group $RESOURCE_GROUP --hostname your-domain.com"
+
+# Show deployment credentials
+echo ""
+echo "📋 Deployment Information:"
+echo "=========================="
+az webapp deployment list-publishing-profiles \
+    --name $WEB_APP_NAME \
+    --resource-group $RESOURCE_GROUP \
+    --query "[?publishMethod=='MSDeploy'].{URL:publishUrl,Username:userName}" \
+    --output table
+
+echo ""
+echo "🎯 To set the MongoDB connection string:"
+echo "========================================"
+echo "1. Go to Azure Portal: https://portal.azure.com"
+echo "2. Navigate to App Services → $WEB_APP_NAME"
+echo "3. Go to Configuration → Application settings"
+echo "4. Add/Edit MONGODB_CONNECTION_STRING"
+echo "5. Get the connection string from your Cosmos DB account"
+echo ""
+echo "Or use Azure CLI:"
+echo "az webapp config appsettings set \\"
+echo "  --name $WEB_APP_NAME \\"
+echo "  --resource-group $RESOURCE_GROUP \\"
+echo "  --settings MONGODB_CONNECTION_STRING='mongodb://mindmate-cdb:[KEY]@mindmate-cdb.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@mindmate-cdb@'"

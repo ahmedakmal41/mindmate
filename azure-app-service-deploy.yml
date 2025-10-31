@@ -1,0 +1,45 @@
+# Azure App Service Deployment Configuration
+# GitHub Actions workflow for deploying MindMate to Azure App Service
+
+name: Deploy MindMate to Azure App Service
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  AZURE_WEBAPP_NAME: mindmate-app    # Set this to your app name
+  AZURE_WEBAPP_PACKAGE_PATH: '.'    # Set this to the path to your web app project
+  PHP_VERSION: '8.2'                # Set this to the PHP version to use
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mongodb, curl, json, openssl
+        
+    - name: Check if composer.json exists
+      id: check_files
+      uses: andstor/file-existence-action@v1
+      with:
+        files: 'composer.json'
+        
+    - name: Install Composer dependencies
+      if: steps.check_files.outputs.files_exists == 'true'
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+      
+    - name: 'Deploy to Azure Web App'
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}

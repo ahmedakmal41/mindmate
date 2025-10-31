@@ -1,0 +1,45 @@
+{
+  "name": "mindmate-app",
+  "location": "East US",
+  "resourceGroup": "mindmate-rg",
+  "appServicePlan": {
+    "name": "mindmate-plan",
+    "sku": "B1",
+    "tier": "Basic"
+  },
+  "runtime": {
+    "name": "PHP",
+    "version": "8.2"
+  },
+  "appSettings": [
+    {
+      "name": "DB_TYPE",
+      "value": "mongodb"
+    },
+    {
+      "name": "COSMOS_DATABASE", 
+      "value": "mindmate"
+    },
+    {
+      "name": "AI_API_URL",
+      "value": "https://aiengine-sable.vercel.app"
+    },
+    {
+      "name": "MONGODB_CONNECTION_STRING",
+      "value": "SET_IN_AZURE_PORTAL",
+      "slotSetting": false
+    },
+    {
+      "name": "PHP_INI_SCAN_DIR",
+      "value": "/usr/local/etc/php/conf.d:/home/site/ini"
+    },
+    {
+      "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+      "value": "true"
+    }
+  ],
+  "connectionStrings": [],
+  "extensions": [
+    "mongodb"
+  ]
+}

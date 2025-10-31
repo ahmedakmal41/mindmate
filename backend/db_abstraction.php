@@ -345,5 +345,3 @@ function recordRateLimit($userId, $action) {
     global $db;
     return $db->recordRateLimit($userId, $action);
 }
-
-?>
