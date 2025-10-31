@@ -127,12 +127,15 @@ class MongoDBConnection {
 try {
     $mongodb = new MongoDBConnection($mongodb_connection_string, $cosmos_database, $collections);
     
-    // Try to create indexes (may fail if credentials are invalid)
+    // Try to create indexes (non-critical - app works without them)
+    // Note: Cosmos DB may not support all index types
+    // Indexes can be created manually via Azure Portal if needed
     try {
-        $mongodb->createIndexes();
+        // Skip automatic index creation for Cosmos DB compatibility
+        // $mongodb->createIndexes();
+        error_log("Info: Skipping automatic index creation (use Azure Portal for Cosmos DB indexes)");
     } catch (Exception $e) {
         error_log("Warning: Could not create indexes - " . $e->getMessage());
-        // Continue anyway - indexes will be created on first successful connection
     }
 } catch (Exception $e) {
     error_log("MongoDB Connection Error: " . $e->getMessage());
