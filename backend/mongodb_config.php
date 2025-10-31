@@ -49,29 +49,47 @@ class MongoDBConnection {
     
     public function createIndexes() {
         // Create indexes for better performance using native driver
+        // Note: Some index types may not be supported in Cosmos DB
         try {
-            // Users indexes
+            // Users indexes - Critical for authentication
             $this->createIndex('users', ['email' => 1], ['unique' => true]);
-            $this->createIndex('users', ['username' => 1], ['unique' => true]);
-            
-            // Chats indexes
-            $this->createIndex('chats', ['user_id' => 1, 'timestamp' => -1]);
-            $this->createIndex('chats', ['timestamp' => -1]);
-            
-            // Mood checks indexes
-            $this->createIndex('mood_checks', ['user_id' => 1, 'timestamp' => -1]);
-            $this->createIndex('mood_checks', ['timestamp' => -1]);
-            
-            // Rate limits indexes
-            $this->createIndex('rate_limits', ['user_id' => 1, 'action' => 1, 'created_at' => 1]);
-            $this->createIndex('rate_limits', ['created_at' => 1], ['expireAfterSeconds' => 3600]);
-            
-            // User sessions indexes
-            $this->createIndex('user_sessions', ['user_id' => 1]);
-            $this->createIndex('user_sessions', ['last_activity' => 1], ['expireAfterSeconds' => 604800]);
             
         } catch (Exception $e) {
-            error_log("Warning: Could not create some indexes - " . $e->getMessage());
+            error_log("Warning: Could not create email index - " . $e->getMessage());
+        }
+        
+        try {
+            $this->createIndex('users', ['username' => 1], ['unique' => true]);
+        } catch (Exception $e) {
+            error_log("Warning: Could not create username index - " . $e->getMessage());
+        }
+        
+        try {
+            // Chats indexes - For query performance
+            $this->createIndex('chats', ['user_id' => 1, 'timestamp' => -1]);
+        } catch (Exception $e) {
+            error_log("Warning: Could not create chats compound index - " . $e->getMessage());
+        }
+        
+        try {
+            // Mood checks indexes
+            $this->createIndex('mood_checks', ['user_id' => 1, 'timestamp' => -1]);
+        } catch (Exception $e) {
+            error_log("Warning: Could not create mood_checks index - " . $e->getMessage());
+        }
+        
+        try {
+            // Rate limits indexes (no TTL for Cosmos DB compatibility)
+            $this->createIndex('rate_limits', ['user_id' => 1, 'action' => 1]);
+        } catch (Exception $e) {
+            error_log("Warning: Could not create rate_limits index - " . $e->getMessage());
+        }
+        
+        try {
+            // User sessions indexes
+            $this->createIndex('user_sessions', ['user_id' => 1]);
+        } catch (Exception $e) {
+            error_log("Warning: Could not create user_sessions index - " . $e->getMessage());
         }
     }
     
