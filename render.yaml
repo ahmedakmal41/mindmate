@@ -5,10 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: MONGODB_CONNECTION_STRING
-        fromService:
-          type: web
-          name: mindmate
-          envVarKey: MONGODB_CONNECTION_STRING
+        sync: false  # Set this manually in Render Dashboard
       - key: COSMOS_DATABASE
         value: mindmate
       - key: AI_API_URL
