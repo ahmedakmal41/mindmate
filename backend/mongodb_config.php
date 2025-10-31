@@ -2,8 +2,20 @@
 // MindMate - Cosmos DB MongoDB Configuration (Native Driver)
 
 // MongoDB connection string
-$mongodb_connection_string = getenv('MONGODB_CONNECTION_STRING') ?: 'mongodb://mindmate-cdb:undefined@mindmate-cdb.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@mindmate-cdb@';
+$mongodb_connection_string = getenv('MONGODB_CONNECTION_STRING');
 $cosmos_database = getenv('COSMOS_DATABASE') ?: 'mindmate';
+
+// Validate connection string is set
+if (empty($mongodb_connection_string) || strpos($mongodb_connection_string, 'undefined') !== false || strpos($mongodb_connection_string, 'YOUR_') !== false) {
+    error_log("ERROR: MongoDB connection string not configured properly");
+    die("MongoDB connection string is not configured.\n\n" .
+        "Please set MONGODB_CONNECTION_STRING environment variable.\n\n" .
+        "To fix:\n" .
+        "1. Create a .env file in the project root\n" .
+        "2. Add: MONGODB_CONNECTION_STRING=your_actual_connection_string\n" .
+        "3. Get your connection string from Azure Portal > Cosmos DB > Connection String\n\n" .
+        "Or set it directly in your environment.\n");
+}
 
 // Check if MongoDB extension is loaded
 if (!extension_loaded('mongodb')) {
@@ -167,27 +179,47 @@ function createUserMongoDB($userData) {
 function getUserByEmailMongoDB($email) {
     global $mongodb;
     
-    $filter = ['email' => $email];
-    $query = new MongoDB\Driver\Query($filter);
-    
-    $cursor = $mongodb->getManager()->executeQuery($mongodb->getFullCollectionName('users'), $query);
-    $users = $cursor->toArray();
-    
-    if (!empty($users)) {
-        $user = $users[0];
-        return [
-            'id' => (string)$user->_id,
-            'username' => $user->username,
-            'email' => $user->email,
-            'password_hash' => $user->password_hash,
-            'created_at' => $user->created_at->toDateTime()->format('Y-m-d H:i:s'),
-            'updated_at' => $user->updated_at->toDateTime()->format('Y-m-d H:i:s'),
-            'last_login' => isset($user->last_login) && $user->last_login ? $user->last_login->toDateTime()->format('Y-m-d H:i:s') : null,
-            'is_active' => $user->is_active
-        ];
+    try {
+        $filter = ['email' => $email];
+        $query = new MongoDB\Driver\Query($filter);
+        
+        $cursor = $mongodb->getManager()->executeQuery($mongodb->getFullCollectionName('users'), $query);
+        $users = $cursor->toArray();
+        
+        if (!empty($users)) {
+            $user = $users[0];
+            return [
+                'id' => (string)$user->_id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'password_hash' => $user->password_hash,
+                'created_at' => $user->created_at->toDateTime()->format('Y-m-d H:i:s'),
+                'updated_at' => $user->updated_at->toDateTime()->format('Y-m-d H:i:s'),
+                'last_login' => isset($user->last_login) && $user->last_login ? $user->last_login->toDateTime()->format('Y-m-d H:i:s') : null,
+                'is_active' => $user->is_active
+            ];
+        }
+        
+        return null;
+    } catch (MongoDB\Driver\Exception\AuthenticationException $e) {
+        error_log("MongoDB Authentication Error: " . $e->getMessage());
+        die("Database authentication failed. Your MongoDB connection string may be invalid or expired.\n\n" .
+            "Error: " . $e->getMessage() . "\n\n" .
+            "To fix:\n" .
+            "1. Go to Azure Portal (https://portal.azure.com)\n" .
+            "2. Navigate to your Cosmos DB account\n" .
+            "3. Click 'Connection String' in the left menu\n" .
+            "4. Copy the PRIMARY CONNECTION STRING\n" .
+            "5. Update your .env file or environment variable MONGODB_CONNECTION_STRING\n" .
+            "6. Restart the application\n");
+    } catch (MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
+        error_log("MongoDB Connection Timeout: " . $e->getMessage());
+        die("Database connection timeout. Check your network connection and Cosmos DB firewall rules.\n\n" .
+            "Error: " . $e->getMessage() . "\n");
+    } catch (Exception $e) {
+        error_log("MongoDB Error: " . $e->getMessage());
+        throw $e;
     }
-    
-    return null;
 }
 
 function getUserByIdMongoDB($id) {
